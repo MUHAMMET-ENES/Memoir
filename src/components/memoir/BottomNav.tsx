@@ -33,8 +33,8 @@ const items: NavItem[] = [
   {
     label: "You",
     icon: User,
-    to: "/",
-    match: (p) => p === "/you",
+    to: "/you",
+    match: (p) => p.startsWith("/you"),
   },
 ];
 
