@@ -1,9 +1,30 @@
+const WEEKDAYS = [
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+];
+const MONTHS = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
+
 export function ShelfHeader() {
-  const today = new Date().toLocaleDateString(undefined, {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-  });
+  const d = new Date();
+  const today = `${WEEKDAYS[d.getDay()]}, ${MONTHS[d.getMonth()]} ${d.getDate()}`;
   return (
     <header className="px-6 pt-16 pb-10 text-center">
       <div className="font-sans text-[10px] uppercase tracking-[0.4em] text-[color:var(--ink-tertiary)]">
