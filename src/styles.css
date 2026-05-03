@@ -26,6 +26,8 @@
   --radius-2xl: calc(var(--radius) + 8px);
   --radius-3xl: calc(var(--radius) + 12px);
   --radius-4xl: calc(var(--radius) + 16px);
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Lora", Georgia, "Times New Roman", serif;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -59,29 +61,43 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+  --color-sepia: var(--sepia);
+  --color-slate-ink: var(--slate-ink);
+  --color-forest: var(--forest);
+  --color-vermilion: var(--vermilion);
+  --color-paper-sunken: var(--paper-sunken);
+  --color-ink-tertiary: var(--ink-tertiary);
 }
 
 :root {
   --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.129 0.042 264.695);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.129 0.042 264.695);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.129 0.042 264.695);
-  --primary: oklch(0.208 0.042 265.755);
-  --primary-foreground: oklch(0.984 0.003 247.858);
-  --secondary: oklch(0.968 0.007 247.896);
-  --secondary-foreground: oklch(0.208 0.042 265.755);
-  --muted: oklch(0.968 0.007 247.896);
-  --muted-foreground: oklch(0.554 0.046 257.417);
-  --accent: oklch(0.968 0.007 247.896);
-  --accent-foreground: oklch(0.208 0.042 265.755);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.984 0.003 247.858);
-  --border: oklch(0.929 0.013 255.508);
-  --input: oklch(0.929 0.013 255.508);
-  --ring: oklch(0.704 0.04 256.788);
+  /* Memoir — Light "The Study" */
+  --background: oklch(0.972 0.005 95);   /* #F9F9F7 paper cream */
+  --foreground: oklch(0.18 0.01 60);      /* #1A1A1A deep ink */
+  --card: oklch(0.985 0.008 90);          /* warm white book cover */
+  --card-foreground: oklch(0.18 0.01 60);
+  --popover: oklch(0.985 0.008 90);
+  --popover-foreground: oklch(0.18 0.01 60);
+  --primary: oklch(0.42 0.13 35);         /* sepia/vermilion CTA */
+  --primary-foreground: oklch(0.972 0.005 95);
+  --secondary: oklch(0.93 0.012 80);
+  --secondary-foreground: oklch(0.18 0.01 60);
+  --muted: oklch(0.93 0.012 80);
+  --muted-foreground: oklch(0.48 0.02 60);
+  --accent: oklch(0.92 0.018 70);
+  --accent-foreground: oklch(0.28 0.04 50);
+  --destructive: oklch(0.5 0.18 30);
+  --destructive-foreground: oklch(0.985 0.005 90);
+  --border: oklch(0.88 0.014 80);         /* warm hairline */
+  --input: oklch(0.9 0.012 80);
+  --ring: oklch(0.6 0.05 60);
+  /* Memoir custom tokens */
+  --sepia: oklch(0.5 0.09 55);            /* #8B5A2B */
+  --slate-ink: oklch(0.42 0.04 255);      /* #3D5068 */
+  --forest: oklch(0.5 0.06 145);          /* #4A6741 */
+  --vermilion: oklch(0.42 0.14 35);       /* #8B2E12 */
+  --paper-sunken: oklch(0.94 0.01 85);
+  --ink-tertiary: oklch(0.62 0.02 70);
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
@@ -140,5 +156,21 @@
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
+    font-family: var(--font-sans);
+    font-feature-settings: "ss01", "cv11";
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Subtle paper texture */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.035;
+    mix-blend-mode: multiply;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.6'/></svg>");
   }
 }
