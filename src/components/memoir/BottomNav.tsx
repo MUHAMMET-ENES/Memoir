@@ -38,12 +38,49 @@ const items: NavItem[] = [
   },
 ];
 
-export function BottomNav() {
+export type BottomNavTheme = "paper" | "dim";
+
+const themes: Record<
+  BottomNavTheme,
+  {
+    bar: string;
+    inactiveText: string;
+    activeText: string;
+    activeIcon: string;
+    activeBgHalo: string;
+    dot: string;
+  }
+> = {
+  // Default — for cream paper background (#F9F9F7).
+  // Active gets a warm sepia wash + sepia dot so the indicator reads against light paper.
+  paper: {
+    bar: "border-border bg-[color:var(--card)]/85",
+    inactiveText: "text-[color:var(--ink-tertiary)]",
+    activeText: "text-[color:var(--sepia)]",
+    activeIcon: "text-[color:var(--sepia)]",
+    activeBgHalo:
+      "bg-[color:var(--sepia)]/10 ring-1 ring-[color:var(--sepia)]/15",
+    dot: "bg-[color:var(--sepia)]",
+  },
+  // Dim paper — slightly darker bar, warmer accent (vermilion) for stronger glow.
+  dim: {
+    bar: "border-[color:var(--ink-tertiary)]/25 bg-[color:var(--paper-sunken)]/90",
+    inactiveText: "text-[color:var(--ink-tertiary)]",
+    activeText: "text-[color:var(--vermilion)]",
+    activeIcon: "text-[color:var(--vermilion)]",
+    activeBgHalo:
+      "bg-[color:var(--vermilion)]/10 ring-1 ring-[color:var(--vermilion)]/20",
+    dot: "bg-[color:var(--vermilion)]",
+  },
+};
+
+export function BottomNav({ theme = "paper" }: { theme?: BottomNavTheme } = {}) {
   const { pathname } = useLocation();
+  const t = themes[theme];
 
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-[color:var(--card)]/85 backdrop-blur-md"
+      className={`fixed inset-x-0 bottom-0 z-30 border-t backdrop-blur-md ${t.bar}`}
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       aria-label="Primary"
     >
@@ -58,30 +95,35 @@ export function BottomNav() {
                 aria-current={active ? "page" : undefined}
                 className="group relative flex min-h-11 flex-col items-center justify-center gap-1 rounded-md px-3 py-2"
               >
+                {/* Warm halo behind the active item */}
+                <span
+                  aria-hidden
+                  className={`pointer-events-none absolute left-1/2 top-1/2 h-12 w-14 -translate-x-1/2 -translate-y-1/2 rounded-full transition-opacity duration-300 ${
+                    active ? `opacity-100 ${t.activeBgHalo}` : "opacity-0"
+                  }`}
+                />
                 <Icon
                   size={22}
                   strokeWidth={active ? 1.85 : 1.5}
-                  className={
+                  className={`relative transition-all duration-200 ${
                     active
-                      ? "text-foreground transition-transform duration-200 -translate-y-0.5"
-                      : "text-[color:var(--ink-tertiary)] transition-colors group-hover:text-foreground"
-                  }
+                      ? `${t.activeIcon} -translate-y-0.5`
+                      : `${t.inactiveText} group-hover:text-foreground`
+                  }`}
                 />
                 <span
-                  className={`font-sans text-[9px] uppercase tracking-[0.22em] transition-colors ${
+                  className={`relative font-sans text-[9px] uppercase tracking-[0.22em] transition-colors ${
                     active
-                      ? "text-foreground"
-                      : "text-[color:var(--ink-tertiary)] group-hover:text-foreground"
+                      ? t.activeText
+                      : `${t.inactiveText} group-hover:text-foreground`
                   }`}
                 >
                   {label}
                 </span>
                 <span
                   aria-hidden
-                  className={`h-1 w-1 rounded-full transition-all duration-200 ${
-                    active
-                      ? "bg-[color:var(--sepia)] opacity-100 scale-100"
-                      : "bg-[color:var(--sepia)] opacity-0 scale-50"
+                  className={`relative h-1 w-1 rounded-full transition-all duration-200 ${t.dot} ${
+                    active ? "opacity-100 scale-100" : "opacity-0 scale-50"
                   }`}
                 />
               </Link>
