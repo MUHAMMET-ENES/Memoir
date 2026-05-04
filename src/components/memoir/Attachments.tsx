@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ImagePlus, MapPin, Mic, Pause, Play, Square, X } from "lucide-react";
 import { toast } from "sonner";
 
@@ -306,40 +306,60 @@ function VoiceChip({
 
 /* ---------------- Main attachments component ---------------- */
 
-export function Attachments({
+export type AttachmentActions = {
+  pickPhoto: () => void;
+  recordVoice: () => void;
+  pinLocation: () => void;
+  /** Hidden file input + voice recorder modal. Render once near the editor. */
+  portal: React.ReactNode;
+};
+
+/**
+ * Owns the photo file input + voice recorder modal and exposes triggers.
+ * Multiple UI surfaces (inline buttons, bottom toolbar) call the same triggers.
+ */
+export function useAttachmentActions({
   attachments,
   setAttachments,
 }: {
   attachments: Attachment[];
   setAttachments: (next: Attachment[]) => void;
-}) {
+}): AttachmentActions {
   const photoInputRef = useRef<HTMLInputElement | null>(null);
   const [voiceOpen, setVoiceOpen] = useState(false);
 
-  function addAttachment(a: Attachment) {
-    setAttachments([...attachments, a]);
-  }
+  // Use a ref so callbacks stay stable across renders.
+  const attachmentsRef = useRef(attachments);
+  useEffect(() => {
+    attachmentsRef.current = attachments;
+  }, [attachments]);
 
-  function removeAttachment(id: string) {
-    setAttachments(attachments.filter((a) => a.id !== id));
-  }
+  const addAttachment = useCallback(
+    (a: Attachment) => setAttachments([...attachmentsRef.current, a]),
+    [setAttachments],
+  );
 
-  async function handlePhotos(files: FileList | null) {
-    if (!files || files.length === 0) return;
-    const next: PhotoAttachment[] = [];
-    for (const file of Array.from(files)) {
-      if (!file.type.startsWith("image/")) continue;
-      try {
-        const url = await fileToDataUrl(file);
-        next.push({ id: uid(), kind: "photo", url, name: file.name });
-      } catch {
-        toast("Couldn't read that image.");
+  const handlePhotos = useCallback(
+    async (files: FileList | null) => {
+      if (!files || files.length === 0) return;
+      const next: PhotoAttachment[] = [];
+      for (const file of Array.from(files)) {
+        if (!file.type.startsWith("image/")) continue;
+        try {
+          const url = await fileToDataUrl(file);
+          next.push({ id: uid(), kind: "photo", url, name: file.name });
+        } catch {
+          toast("Couldn't read that image.");
+        }
       }
-    }
-    if (next.length) setAttachments([...attachments, ...next]);
-  }
+      if (next.length) setAttachments([...attachmentsRef.current, ...next]);
+    },
+    [setAttachments],
+  );
 
-  function handleLocation() {
+  const pickPhoto = useCallback(() => photoInputRef.current?.click(), []);
+  const recordVoice = useCallback(() => setVoiceOpen(true), []);
+  const pinLocation = useCallback(() => {
     if (typeof navigator === "undefined" || !navigator.geolocation) {
       toast("Location isn't available on this device.");
       return;
@@ -353,12 +373,55 @@ export function Attachments({
         toast.success("Location pinned.", { id: t });
       },
       (err) => {
-        toast(err.code === err.PERMISSION_DENIED ? "Location permission denied." : "Couldn't get your location.", {
-          id: t,
-        });
+        toast(
+          err.code === err.PERMISSION_DENIED
+            ? "Location permission denied."
+            : "Couldn't get your location.",
+          { id: t },
+        );
       },
       { enableHighAccuracy: false, timeout: 8000, maximumAge: 60_000 },
     );
+  }, [addAttachment]);
+
+  const portal = useMemo(
+    () => (
+      <>
+        <input
+          ref={photoInputRef}
+          type="file"
+          accept="image/*"
+          multiple
+          className="hidden"
+          onChange={(e) => {
+            handlePhotos(e.target.files);
+            if (photoInputRef.current) photoInputRef.current.value = "";
+          }}
+        />
+        <VoiceRecorder
+          open={voiceOpen}
+          onClose={() => setVoiceOpen(false)}
+          onSave={(a) => addAttachment(a)}
+        />
+      </>
+    ),
+    [voiceOpen, addAttachment, handlePhotos],
+  );
+
+  return { pickPhoto, recordVoice, pinLocation, portal };
+}
+
+export function Attachments({
+  attachments,
+  setAttachments,
+  actions,
+}: {
+  attachments: Attachment[];
+  setAttachments: (next: Attachment[]) => void;
+  actions: AttachmentActions;
+}) {
+  function removeAttachment(id: string) {
+    setAttachments(attachments.filter((a) => a.id !== id));
   }
 
   const photos = attachments.filter((a): a is PhotoAttachment => a.kind === "photo");
@@ -368,18 +431,6 @@ export function Attachments({
 
   return (
     <section className="mt-10">
-      <input
-        ref={photoInputRef}
-        type="file"
-        accept="image/*"
-        multiple
-        className="hidden"
-        onChange={(e) => {
-          handlePhotos(e.target.files);
-          if (photoInputRef.current) photoInputRef.current.value = "";
-        }}
-      />
-
       <div className="flex items-center gap-3">
         <div className="font-sans text-[10px] uppercase tracking-[0.4em] text-[color:var(--ink-tertiary)]">
           Marginalia
@@ -388,13 +439,9 @@ export function Attachments({
       </div>
 
       <div className="mt-4 flex flex-wrap gap-2">
-        <ActionButton
-          icon={ImagePlus}
-          label="Add photo"
-          onClick={() => photoInputRef.current?.click()}
-        />
-        <ActionButton icon={Mic} label="Add voice" onClick={() => setVoiceOpen(true)} />
-        <ActionButton icon={MapPin} label="Add location" onClick={handleLocation} />
+        <ActionButton icon={ImagePlus} label="Add photo" onClick={actions.pickPhoto} />
+        <ActionButton icon={Mic} label="Add voice" onClick={actions.recordVoice} />
+        <ActionButton icon={MapPin} label="Add location" onClick={actions.pinLocation} />
       </div>
 
       {hasAny && (
@@ -459,12 +506,6 @@ export function Attachments({
           )}
         </div>
       )}
-
-      <VoiceRecorder
-        open={voiceOpen}
-        onClose={() => setVoiceOpen(false)}
-        onSave={(a) => addAttachment(a)}
-      />
     </section>
   );
 }
