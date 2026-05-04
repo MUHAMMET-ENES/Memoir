@@ -9,6 +9,10 @@ import { Slider } from "@/components/ui/slider";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+  fireReminderNotification,
+  requestNotificationPermission,
+} from "@/hooks/useDailyReminder";
+import {
   MOCK_STATS,
   TIER_META,
   useProfile,
@@ -252,6 +256,24 @@ function YouPage() {
                 className="bg-transparent font-serif text-base text-foreground focus:outline-none"
               />
             }
+          />
+          <Row
+            label="Allow notifications"
+            hint="Optional — also send a system notification when the app is open."
+            chevron
+            onClick={async () => {
+              const result = await requestNotificationPermission();
+              if (result === "granted") toast.success("Notifications enabled.");
+              else if (result === "denied") toast("Notifications are blocked in your browser.");
+              else if (result === "unsupported") toast("This device doesn't support notifications.");
+              else toast("Notification permission not granted.");
+            }}
+          />
+          <Row
+            label="Send a test reminder"
+            hint="Preview how your daily nudge will feel."
+            chevron
+            onClick={() => fireReminderNotification(profile.displayName)}
           />
         </Section>
 
