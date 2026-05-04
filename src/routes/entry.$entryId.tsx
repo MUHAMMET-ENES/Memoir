@@ -3,6 +3,7 @@ import { useState } from "react";
 import { EditorTopBar } from "@/components/memoir/EditorTopBar";
 import { EditorToolbar } from "@/components/memoir/EditorToolbar";
 import { PageTransition } from "@/components/memoir/PageTransition";
+import { Attachments, type Attachment } from "@/components/memoir/Attachments";
 import { getEntry } from "@/data/mockEntries";
 
 export const Route = createFileRoute("/entry/$entryId")({
@@ -20,6 +21,7 @@ function EntryPage() {
   const initial = getEntry(entryId);
   const [title, setTitle] = useState(initial.title);
   const [body, setBody] = useState(initial.body);
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
 
   return (
     <PageTransition>
@@ -45,6 +47,7 @@ function EntryPage() {
             className="mt-8 block w-full resize-none border-0 bg-transparent p-0 font-serif text-[18px] leading-[1.75] text-foreground placeholder:text-[color:var(--ink-tertiary)]/60 focus:outline-none focus:ring-0"
             aria-label="Entry body"
           />
+          <Attachments attachments={attachments} setAttachments={setAttachments} />
         </main>
         <EditorToolbar />
       </div>
