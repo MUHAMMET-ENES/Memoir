@@ -27,7 +27,7 @@ const items: NavItem[] = [
   {
     label: "Search",
     icon: Search,
-    to: "/",
+    to: "/search",
     match: (p) => p === "/search",
   },
   {
