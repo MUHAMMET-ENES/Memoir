@@ -1,9 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ShelfHeader } from "@/components/memoir/ShelfHeader";
 import { BottomNav } from "@/components/memoir/BottomNav";
-import { VolumeCard, NewVolumeCard } from "@/components/memoir/VolumeCard";
+import { StackedVolumeCard } from "@/components/memoir/StackedVolumeCard";
 import { PageTransition } from "@/components/memoir/PageTransition";
-import { mockVolumes } from "@/data/mockVolumes";
+import { SummaryCard } from "@/components/memoir/SummaryCard";
+import { allEntries, getYears } from "@/data/mockEntries";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -20,23 +21,41 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
+  const years = getYears();
+  const firstYear = years[years.length - 1];
+  const lastYear = years[0];
+  const range = firstYear === lastYear ? `${firstYear}` : `${firstYear} – ${lastYear}`;
+
   return (
     <PageTransition>
       <div className="min-h-screen pb-28">
         <ShelfHeader />
-        <main className="mx-auto max-w-5xl px-6">
+        <main className="mx-auto max-w-3xl px-6">
+          <SummaryCard
+            scope="library"
+            label="The Memoir"
+            entries={allEntries}
+            heading="The story so far"
+          />
+
           <div className="mb-6 flex items-end justify-between">
-            <h2 className="font-serif text-xl text-foreground">Your Shelf</h2>
+            <h2 className="font-serif text-xl text-foreground">Your Library</h2>
             <span className="font-sans text-[10px] uppercase tracking-[0.22em] text-[color:var(--ink-tertiary)]">
-              {mockVolumes.length} volumes
+              {allEntries.length} entries
             </span>
           </div>
-          <div className="grid grid-cols-2 gap-5 sm:gap-6 md:grid-cols-3 lg:grid-cols-4">
-            {mockVolumes.map((v) => (
-              <VolumeCard key={v.id} volume={v} />
-            ))}
-            <NewVolumeCard />
+
+          <div className="mx-auto max-w-[260px]">
+            <StackedVolumeCard
+              to="/library"
+              eyebrow="Memoir"
+              title="The Memoir"
+              subtitle="A complete life in volumes"
+              footer={`${range} · ${years.length} ${years.length === 1 ? "year" : "years"}`}
+              color="sepia"
+            />
           </div>
+
           <p className="mt-16 text-center font-serif italic text-sm text-[color:var(--ink-tertiary)]">
             Everything here lives on your device.
           </p>
