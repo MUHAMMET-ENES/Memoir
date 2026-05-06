@@ -14,6 +14,7 @@ import { Route as SearchRouteImport } from './routes/search'
 import { Route as LibraryRouteImport } from './routes/library'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as HeirloomIndexRouteImport } from './routes/heirloom.index'
+import { Route as HeirloomInterviewIdRouteImport } from './routes/heirloom.$interviewId'
 import { Route as EntryEntryIdRouteImport } from './routes/entry.$entryId'
 
 const YouRoute = YouRouteImport.update({
@@ -41,6 +42,11 @@ const HeirloomIndexRoute = HeirloomIndexRouteImport.update({
   path: '/heirloom/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const HeirloomInterviewIdRoute = HeirloomInterviewIdRouteImport.update({
+  id: '/heirloom/$interviewId',
+  path: '/heirloom/$interviewId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const EntryEntryIdRoute = EntryEntryIdRouteImport.update({
   id: '/entry/$entryId',
   path: '/entry/$entryId',
@@ -53,6 +59,7 @@ export interface FileRoutesByFullPath {
   '/search': typeof SearchRoute
   '/you': typeof YouRoute
   '/entry/$entryId': typeof EntryEntryIdRoute
+  '/heirloom/$interviewId': typeof HeirloomInterviewIdRoute
   '/heirloom/': typeof HeirloomIndexRoute
 }
 export interface FileRoutesByTo {
@@ -61,6 +68,7 @@ export interface FileRoutesByTo {
   '/search': typeof SearchRoute
   '/you': typeof YouRoute
   '/entry/$entryId': typeof EntryEntryIdRoute
+  '/heirloom/$interviewId': typeof HeirloomInterviewIdRoute
   '/heirloom': typeof HeirloomIndexRoute
 }
 export interface FileRoutesById {
@@ -70,6 +78,7 @@ export interface FileRoutesById {
   '/search': typeof SearchRoute
   '/you': typeof YouRoute
   '/entry/$entryId': typeof EntryEntryIdRoute
+  '/heirloom/$interviewId': typeof HeirloomInterviewIdRoute
   '/heirloom/': typeof HeirloomIndexRoute
 }
 export interface FileRouteTypes {
@@ -80,9 +89,17 @@ export interface FileRouteTypes {
     | '/search'
     | '/you'
     | '/entry/$entryId'
+    | '/heirloom/$interviewId'
     | '/heirloom/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/library' | '/search' | '/you' | '/entry/$entryId' | '/heirloom'
+  to:
+    | '/'
+    | '/library'
+    | '/search'
+    | '/you'
+    | '/entry/$entryId'
+    | '/heirloom/$interviewId'
+    | '/heirloom'
   id:
     | '__root__'
     | '/'
@@ -90,6 +107,7 @@ export interface FileRouteTypes {
     | '/search'
     | '/you'
     | '/entry/$entryId'
+    | '/heirloom/$interviewId'
     | '/heirloom/'
   fileRoutesById: FileRoutesById
 }
@@ -99,6 +117,7 @@ export interface RootRouteChildren {
   SearchRoute: typeof SearchRoute
   YouRoute: typeof YouRoute
   EntryEntryIdRoute: typeof EntryEntryIdRoute
+  HeirloomInterviewIdRoute: typeof HeirloomInterviewIdRoute
   HeirloomIndexRoute: typeof HeirloomIndexRoute
 }
 
@@ -139,6 +158,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HeirloomIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/heirloom/$interviewId': {
+      id: '/heirloom/$interviewId'
+      path: '/heirloom/$interviewId'
+      fullPath: '/heirloom/$interviewId'
+      preLoaderRoute: typeof HeirloomInterviewIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/entry/$entryId': {
       id: '/entry/$entryId'
       path: '/entry/$entryId'
@@ -155,6 +181,7 @@ const rootRouteChildren: RootRouteChildren = {
   SearchRoute: SearchRoute,
   YouRoute: YouRoute,
   EntryEntryIdRoute: EntryEntryIdRoute,
+  HeirloomInterviewIdRoute: HeirloomInterviewIdRoute,
   HeirloomIndexRoute: HeirloomIndexRoute,
 }
 export const routeTree = rootRouteImport
