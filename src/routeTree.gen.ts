@@ -13,6 +13,7 @@ import { Route as YouRouteImport } from './routes/you'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as LibraryRouteImport } from './routes/library'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as HeirloomIndexRouteImport } from './routes/heirloom.index'
 import { Route as EntryEntryIdRouteImport } from './routes/entry.$entryId'
 
 const YouRoute = YouRouteImport.update({
@@ -35,6 +36,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const HeirloomIndexRoute = HeirloomIndexRouteImport.update({
+  id: '/heirloom/',
+  path: '/heirloom/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const EntryEntryIdRoute = EntryEntryIdRouteImport.update({
   id: '/entry/$entryId',
   path: '/entry/$entryId',
@@ -47,6 +53,7 @@ export interface FileRoutesByFullPath {
   '/search': typeof SearchRoute
   '/you': typeof YouRoute
   '/entry/$entryId': typeof EntryEntryIdRoute
+  '/heirloom/': typeof HeirloomIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -54,6 +61,7 @@ export interface FileRoutesByTo {
   '/search': typeof SearchRoute
   '/you': typeof YouRoute
   '/entry/$entryId': typeof EntryEntryIdRoute
+  '/heirloom': typeof HeirloomIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -62,13 +70,27 @@ export interface FileRoutesById {
   '/search': typeof SearchRoute
   '/you': typeof YouRoute
   '/entry/$entryId': typeof EntryEntryIdRoute
+  '/heirloom/': typeof HeirloomIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/library' | '/search' | '/you' | '/entry/$entryId'
+  fullPaths:
+    | '/'
+    | '/library'
+    | '/search'
+    | '/you'
+    | '/entry/$entryId'
+    | '/heirloom/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/library' | '/search' | '/you' | '/entry/$entryId'
-  id: '__root__' | '/' | '/library' | '/search' | '/you' | '/entry/$entryId'
+  to: '/' | '/library' | '/search' | '/you' | '/entry/$entryId' | '/heirloom'
+  id:
+    | '__root__'
+    | '/'
+    | '/library'
+    | '/search'
+    | '/you'
+    | '/entry/$entryId'
+    | '/heirloom/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -77,6 +99,7 @@ export interface RootRouteChildren {
   SearchRoute: typeof SearchRoute
   YouRoute: typeof YouRoute
   EntryEntryIdRoute: typeof EntryEntryIdRoute
+  HeirloomIndexRoute: typeof HeirloomIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -109,6 +132,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/heirloom/': {
+      id: '/heirloom/'
+      path: '/heirloom'
+      fullPath: '/heirloom/'
+      preLoaderRoute: typeof HeirloomIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/entry/$entryId': {
       id: '/entry/$entryId'
       path: '/entry/$entryId'
@@ -125,7 +155,17 @@ const rootRouteChildren: RootRouteChildren = {
   SearchRoute: SearchRoute,
   YouRoute: YouRoute,
   EntryEntryIdRoute: EntryEntryIdRoute,
+  HeirloomIndexRoute: HeirloomIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}
