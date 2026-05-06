@@ -116,7 +116,9 @@ function InterviewRoom() {
   }
 
   async function bind() {
-    if (interview.turns.filter((t) => t.role === "subject").length < 2) {
+    const current = interviewRef.current;
+    if (!current) return;
+    if (current.turns.filter((t) => t.role === "subject").length < 2) {
       toast("Record a few more answers before binding.");
       return;
     }
@@ -126,10 +128,10 @@ function InterviewRoom() {
       const { data, error } = await supabase.functions.invoke("interview-host", {
         body: {
           mode: "bind",
-          subjectName: interview.subjectName,
-          theme: interview.theme,
-          title: interview.title,
-          turns: interview.turns,
+          subjectName: current.subjectName,
+          theme: current.theme,
+          title: current.title,
+          turns: current.turns,
         },
       });
       if (error) throw error;
