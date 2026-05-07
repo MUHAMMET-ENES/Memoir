@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ChevronLeft, Printer, Sparkles } from "lucide-react";
+import { ChevronLeft, List, Printer, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 
 import { PageTransition } from "@/components/memoir/PageTransition";
@@ -43,6 +43,15 @@ function BoundVolume() {
   }
 
   const v = iv.bound;
+
+  const handleJump = (e: React.MouseEvent<HTMLAnchorElement>, id: string) => {
+    e.preventDefault();
+    const el = document.getElementById(id);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+      history.replaceState(null, "", `#${id}`);
+    }
+  };
 
   return (
     <PageTransition>
@@ -94,9 +103,40 @@ function BoundVolume() {
             </section>
           )}
 
+          {v.chapters.length > 1 && (
+            <nav
+              aria-label="Table of contents"
+              className="mt-14 border-y border-border py-8 print:hidden"
+            >
+              <div className="flex items-center justify-center gap-2 font-sans text-[10px] uppercase tracking-[0.4em] text-[color:var(--sepia)]">
+                <List size={12} /> Contents
+              </div>
+              <ol className="mx-auto mt-6 max-w-md space-y-3">
+                {v.chapters.map((ch, ci) => {
+                  const id = `chapter-${ci + 1}`;
+                  return (
+                    <li key={ci}>
+                      <a
+                        href={`#${id}`}
+                        onClick={(e) => handleJump(e, id)}
+                        className="group flex items-baseline gap-3 font-serif text-[16px] leading-[1.5] text-foreground hover:text-[color:var(--sepia)]"
+                      >
+                        <span className="font-sans text-[10px] uppercase tracking-[0.3em] text-[color:var(--ink-tertiary)] group-hover:text-[color:var(--sepia)]">
+                          {romanize(ci + 1)}
+                        </span>
+                        <span className="flex-1 border-b border-dotted border-border/60 translate-y-[-4px]" />
+                        <span className="italic">{ch.title}</span>
+                      </a>
+                    </li>
+                  );
+                })}
+              </ol>
+            </nav>
+          )}
+
           <div className="mt-16 space-y-16">
             {v.chapters.map((ch, ci) => (
-              <section key={ci}>
+              <section key={ci} id={`chapter-${ci + 1}`} className="scroll-mt-8">
                 <div className="text-center">
                   <div className="font-sans text-[10px] uppercase tracking-[0.4em] text-[color:var(--sepia)]">
                     Chapter {romanize(ci + 1)}
