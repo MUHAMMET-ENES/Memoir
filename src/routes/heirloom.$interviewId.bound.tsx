@@ -69,6 +69,17 @@ function BoundVolume() {
     return () => observer.disconnect();
   }, [v]);
 
+  useEffect(() => {
+    if (!v) return;
+    const hash = window.location.hash.replace("#", "");
+    if (!hash) return;
+    const raf = requestAnimationFrame(() => {
+      const el = document.getElementById(hash);
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [v]);
+
   const handleJump = (e: React.MouseEvent<HTMLAnchorElement>, id: string) => {
     e.preventDefault();
     const el = document.getElementById(id);
