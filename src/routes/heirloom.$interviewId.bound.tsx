@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ChevronLeft, List, Printer, Sparkles } from "lucide-react";
 import { toast } from "sonner";
@@ -43,6 +43,31 @@ function BoundVolume() {
   }
 
   const v = iv.bound;
+
+  const [activeChapter, setActiveChapter] = useState(0);
+
+  useEffect(() => {
+    if (!v) return;
+    const els = v.chapters
+      .map((_, ci) => document.getElementById(`chapter-${ci + 1}`))
+      .filter((el): el is HTMLElement => !!el);
+    if (!els.length) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
+        if (visible) {
+          const idx = els.indexOf(visible.target as HTMLElement);
+          if (idx >= 0) setActiveChapter(idx);
+        }
+      },
+      { rootMargin: "-20% 0px -60% 0px", threshold: 0 },
+    );
+    els.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, [v]);
 
   const handleJump = (e: React.MouseEvent<HTMLAnchorElement>, id: string) => {
     e.preventDefault();
@@ -114,18 +139,32 @@ function BoundVolume() {
               <ol className="mx-auto mt-6 max-w-md space-y-3">
                 {v.chapters.map((ch, ci) => {
                   const id = `chapter-${ci + 1}`;
+                  const isActive = ci === activeChapter;
                   return (
                     <li key={ci}>
                       <a
                         href={`#${id}`}
                         onClick={(e) => handleJump(e, id)}
-                        className="group flex items-baseline gap-3 font-serif text-[16px] leading-[1.5] text-foreground hover:text-[color:var(--sepia)]"
+                        aria-current={isActive ? "true" : undefined}
+                        className={`group flex items-baseline gap-3 font-serif text-[16px] leading-[1.5] transition-colors hover:text-[color:var(--sepia)] ${
+                          isActive
+                            ? "text-[color:var(--sepia)]"
+                            : "text-foreground"
+                        }`}
                       >
-                        <span className="font-sans text-[10px] uppercase tracking-[0.3em] text-[color:var(--ink-tertiary)] group-hover:text-[color:var(--sepia)]">
+                        <span
+                          className={`font-sans text-[10px] uppercase tracking-[0.3em] transition-colors group-hover:text-[color:var(--sepia)] ${
+                            isActive
+                              ? "text-[color:var(--sepia)]"
+                              : "text-[color:var(--ink-tertiary)]"
+                          }`}
+                        >
                           {romanize(ci + 1)}
                         </span>
                         <span className="flex-1 border-b border-dotted border-border/60 translate-y-[-4px]" />
-                        <span className="italic">{ch.title}</span>
+                        <span className={`italic ${isActive ? "font-medium" : ""}`}>
+                          {ch.title}
+                        </span>
                       </a>
                     </li>
                   );
