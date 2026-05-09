@@ -112,6 +112,8 @@ function BoundVolume() {
 
   const [current, setCurrent] = useState(0);
   const [tocOpen, setTocOpen] = useState(false);
+  const [dragDx, setDragDx] = useState(0);
+  const [touchStart, setTouchStart] = useState<{ x: number; y: number; t: number } | null>(null);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -149,6 +151,34 @@ function BoundVolume() {
     setCurrent(idx);
   };
 
+  const onTouchStart = (e: React.TouchEvent) => {
+    const t = e.touches[0];
+    setTouchStart({ x: t.clientX, y: t.clientY, t: Date.now() });
+    setDragDx(0);
+  };
+  const onTouchMove = (e: React.TouchEvent) => {
+    if (!touchStart) return;
+    const t = e.touches[0];
+    const dx = t.clientX - touchStart.x;
+    const dy = t.clientY - touchStart.y;
+    if (Math.abs(dx) > Math.abs(dy)) {
+      setDragDx(Math.max(-160, Math.min(160, dx)));
+    }
+  };
+  const onTouchEnd = () => {
+    if (!touchStart) return;
+    const elapsed = Date.now() - touchStart.t;
+    const velocity = Math.abs(dragDx) / Math.max(elapsed, 1);
+    const threshold = 60;
+    if (dragDx <= -threshold || (dragDx < -20 && velocity > 0.4)) {
+      next();
+    } else if (dragDx >= threshold || (dragDx > 20 && velocity > 0.4)) {
+      prev();
+    }
+    setTouchStart(null);
+    setDragDx(0);
+  };
+
   return (
     <PageTransition>
       <main
@@ -176,7 +206,11 @@ function BoundVolume() {
         {/* Book stage */}
         <div
           className="mx-auto flex min-h-dvh items-center justify-center px-4 py-16"
-          style={{ perspective: "2200px" }}
+          style={{ perspective: "2200px", touchAction: "pan-y" }}
+          onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
+          onTouchEnd={onTouchEnd}
+          onTouchCancel={onTouchEnd}
         >
           <div
             className="relative aspect-[3/4] w-full max-w-[460px]"
@@ -188,6 +222,17 @@ function BoundVolume() {
             {pages.map((page, i) => {
               const isCover = page.kind === "front-cover" || page.kind === "back-cover";
               const flipped = i < current;
+              const isTopUnflipped = i === current && dragDx < 0;
+              const isTopFlipped = i === current - 1 && dragDx > 0;
+              let dragRotate = 0;
+              if (isTopUnflipped) {
+                dragRotate = Math.max(-180, (dragDx / 160) * 180);
+              } else if (isTopFlipped) {
+                dragRotate = Math.min(0, -180 + (dragDx / 160) * 180);
+              }
+              const baseRotate = flipped ? -180 : 0;
+              const rotate = (isTopUnflipped || isTopFlipped) ? dragRotate : baseRotate;
+              const dragging = isTopUnflipped || isTopFlipped;
               // Z-index: unflipped pages stack with later ones below;
               // flipped pages stack with earlier ones below.
               const z = flipped ? i + 1 : total - i;
@@ -198,9 +243,10 @@ function BoundVolume() {
                   style={{
                     transformStyle: "preserve-3d",
                     transformOrigin: "left center",
-                    transform: `rotateY(${flipped ? -180 : 0}deg)`,
-                    transition:
-                      "transform 900ms cubic-bezier(0.645, 0.045, 0.355, 1)",
+                    transform: `rotateY(${rotate}deg)`,
+                    transition: dragging
+                      ? "none"
+                      : "transform 900ms cubic-bezier(0.645, 0.045, 0.355, 1)",
                     zIndex: z,
                     pointerEvents: i === current || i === current - 1 ? "auto" : "none",
                   }}
