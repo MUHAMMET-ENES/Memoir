@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { useNavigate } from "@tanstack/react-router";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -50,4 +51,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export function useAuth() {
   return useContext(AuthContext);
+}
+
+/** Redirects to /login if not signed in. Returns { user, ready } — ready is true once we know. */
+export function useRequireAuth() {
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
+  useEffect(() => {
+    if (!loading && !user) {
+      const path =
+        typeof window !== "undefined" ? window.location.pathname : "/heirloom";
+      navigate({ to: "/login", search: { redirect: path } });
+    }
+  }, [user, loading, navigate]);
+  return { user, ready: !loading && !!user };
 }
