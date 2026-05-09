@@ -1,118 +1,142 @@
-# Memoir — Milestone 1 UI
+# Memoir — Strategic Analysis & Roadmap
 
-Mobile-first React prototype of two core screens: **The Shelf** (home) and **The Entry Editor**. Static mocked data only — no backend, no persistence. Editorial, tactile, generous whitespace.
+## What you've built so far
 
-## Design system setup
+A private, beautifully typeset journaling app with three pillars:
 
-Update `src/styles.css` to encode the Memoir tokens (light mode for M1):
+1. **The Library** — stacked volumes by year, literary typography (serif), a calm sepia "study" aesthetic.
+2. **AI reflection** — `summarize` edge function turns entries into warm 2–3 sentence reflections at library/year/month scope.
+3. **Heirloom Interviews** — the standout feature. A StoryCorps-style AI oral historian conducts a voice interview with a grandparent (or anyone), transcribes it, then "binds" it as a 3D page-turning hardcover volume with epigraph, preface, chapters, closing — swipeable on mobile, keyboard navigable on desktop.
 
-- `--background: #F9F9F7` (paper cream)
-- `--foreground: #1A1A1A` (deep ink)
-- `--muted-foreground: #6B6B66` (warm tan/slate for metadata)
-- `--border: #E8E4DA` (ghost ink)
-- `--card: #FFFDF8` (warm white for book covers / sheets)
-- Accents: `--accent-sepia: #8B5A2B`, `--accent-slate: #3D5068`, `--accent-forest: #4A6741`, `--accent-vermilion: #8B2E12` (primary CTA)
-- `--radius: 10px` (8–12px range)
-- Remove dark-mode overrides for now (leave structure for later).
+Stack: TanStack Start + Lovable Cloud + Lovable AI Gateway (Gemini 3 Flash). Local storage for interviews; mocked entries elsewhere.
 
-Typography (dual-font):
-- Add Google Fonts `<link>` for **Lora** (serif: headers + journal body) and **Inter** (sans: UI/nav/buttons) in `src/routes/__root.tsx` head links.
-- Tailwind v4 theme tokens: `--font-serif: "Lora", Georgia, serif;` and `--font-sans: "Inter", system-ui, sans-serif;` exposed via `@theme inline` so `font-serif` / `font-sans` utilities work.
-- Body defaults to `font-sans`; journal/editorial surfaces opt into `font-serif`.
+---
 
-Global feel:
-- Subtle paper texture: a very low-opacity SVG noise as a fixed background layer behind `body` (CSS only, no asset file needed — inline data URI).
-- Buttons: rounded-[10px], min-h-11, never pure black, hover = soft sepia tint.
+## Do people want this?
 
-## Routes
+**Short answer: yes, but for a narrower, more emotional reason than "journaling."**
 
-- `src/routes/index.tsx` → **Shelf View**
-- `src/routes/entry.$entryId.tsx` → **Entry Editor** (uses param so we can navigate from a cover; mocked entries keyed by id)
+The journaling space is crowded and commoditized — Day One, Stoic, Reflectly, Apple Journal (free, default on iPhone). Competing as "another beautiful journal" is brutal. Retention in that category is famously poor (most journaling apps lose >80% of users in 30 days).
 
-`__root.tsx` keeps the shell minimal — no global header, since the Shelf and Editor each own their chrome.
+**The Heirloom Interview is different.** It solves a problem people *already feel guilty about*:
 
-## Screen 1 — The Shelf (`/`)
+- "I should record my grandma before it's too late."
+- "I want my kids to know who their great-grandfather was."
+- StoryCorps has 700K+ recorded interviews and a cult following — but the UX is high-friction (book a booth, app is clunky, no artifact at the end).
+- Ancestry, 23andMe, Storyworth ($99/yr, ~$40M+ ARR) prove the willingness to pay for family legacy products.
+- Storyworth in particular is the closest competitor — and it's **email-based, text-only, and the book is plain**. You have a dramatically better artifact (3D bound volume, voice-led, AI-guided) and a better acquisition surface (mobile, immediate).
 
-Layout (mobile-first):
-- Top: generous 64px+ vertical padding. Serif wordmark "Memoir" centered, small sans subtitle "Your life, beautifully remembered".
-- Quiet greeting line in serif italic: "Good evening, Anna." + today's date in small sans uppercase tracking.
-- **Bookshelf grid**: 2 columns on mobile (`grid-cols-2 gap-5`), 3 on `md`, 4 on `lg`. Vertical scroll.
-- Each **Volume card**:
-  - Aspect ratio ~2:3 (book cover proportions).
-  - Cloth-like background (one of 4 muted cover colors: sepia, slate, forest, deep cream).
-  - Thin inset border + a faint embossed serif title ("2026 — Vol. I"), small sans subtitle ("Jan – Apr · 47 entries").
-  - 3D shadow effect: layered box-shadows (right + bottom) + a 2px darker "spine" strip on the left edge to imply depth.
-  - Hover/press: gentle lift (translate-y-[-2px], shadow grows) — 200ms ease-out.
-- A "+ New Volume" card at the end: dashed warm border, serif "+" glyph, no fill.
+**Verdict:** Pivot the identity from "journal with an interview feature" to "**heirloom volumes for the people you love**" — where personal journaling is *one* kind of volume, and Interview is the hero.
 
-Bottom navigation (minimalist, fixed):
-- 4 icons (lucide): `BookOpen` (Shelf, active), `PenLine` (Write), `Search`, `User`.
-- Background: `--card` with a hairline top border, `backdrop-blur-sm`. Icon size 22, label in tiny uppercase Inter, 11px, tracking-wide. Active state = ink color + a tiny sepia dot under icon (no pill, no fill).
-- Tap target ≥ 44×44.
+---
 
-Mocked data: array of 6 volumes in `src/data/mockVolumes.ts`. Tapping any volume navigates to `/entry/$id` (M1 shortcut: a volume opens a sample entry; in later milestones it'll open the volume's TOC).
+## Will they pay?
 
-## Screen 2 — The Entry Editor (`/entry/:entryId`)
+Yes — but the pricing model matters. Three patterns work in this space:
 
-Distraction-free canvas on `#F9F9F7`.
+| Model | Example | Fit |
+|---|---|---|
+| Annual subscription with prompted content | Storyworth $99/yr | Strong — gifting context, calendar-driven |
+| One-time per volume + printed book | Shutterfly, Artifact Uprising | Strong — emotional purchase, tangible |
+| Freemium app + paid print | Day One Premium $35/yr | Weak alone, strong combined |
 
-Top bar (sticky, 56px tall, transparent with hairline bottom border that fades in on scroll):
-- Left: `ChevronLeft` Back button (ghost, sans label "Shelf" optional on ≥sm). Returns to `/`.
-- Center: tiny sans uppercase metadata — "Tuesday · May 5".
-- Right: "Save" button — ghost text button in sepia, sans, weight 500. Disabled state when nothing changed (mocked: always enabled).
+**Recommended hybrid:**
 
-Canvas (max-w-[680px] mx-auto, px-6, py-10):
-- **Title**: serif, 32px mobile / 40px sm+, weight 500, ink color, contenteditable-styled (a styled `<input>` with no border, placeholder "Title your day…" in tertiary ink).
-- **Date line**: small caps sans, muted, under title, 24px margin.
-- **Body**: serif, 18px, line-height 1.7, generous letter spacing. Rendered as a styled `<textarea>` that auto-grows (or a contenteditable `div`). Placeholder: "Begin where you are."
-- Pre-filled sample entry (Lora, ~3 paragraphs of reflective prose) so the visual is complete.
-- A faint center-aligned ornamental glyph (`✦` or a thin SVG flourish) between paragraphs is **not** added by default — kept for later.
+- **Free**: 1 interview, 1 personal journal, on-device only, watermark on bound PDF.
+- **Memoir Plus ($59/yr or $7/mo)**: unlimited interviews, cloud sync, export, custom themes/covers, chapter editing, voice cloning of the storyteller for narration playback.
+- **Memoir Legacy (one-time $79–$149 per volume)**: archival hardcover printed and shipped. This is where real margin lives — Storyworth charges $99 just for the book.
 
-Bottom toolbar (fixed, 56px, paper card with hairline top border):
-- 3 icons left-aligned with comfy spacing: `ImagePlus` (photos), `Mic` (voice note), `MapPin` (location).
-- 1 icon right-aligned: `MoreHorizontal`.
-- All icons: 22px, ink-secondary color, no labels, 44×44 tap targets, gentle hover bg `--bg-sunken`.
-- Buttons are mocked — clicking shows a small toast ("Coming soon") via existing sonner.
+The gifting moment is your golden hour: **"Buy this for your dad on Father's Day. He gets weekly calls from a warm AI. You get a hardcover book at Christmas."**
 
-## Transition between screens
+---
 
-Use **Framer Motion** (already-friendly with TanStack Router via `AnimatePresence` wrapper) OR — to keep deps minimal — pure CSS classes:
-- Add `motion` (`framer-motion`) as a dep.
-- Wrap each route's root element in `motion.div` with: `initial={{ opacity: 0, x: 12 }}`, `animate={{ opacity: 1, x: 0 }}`, `exit={{ opacity: 0, x: -8 }}`, `transition={{ duration: 0.22, ease: [0.22, 0.61, 0.36, 1] }}`.
-- Total ≤ 250ms, subtle slide + crossfade. No 3D curls.
+## What's missing today (gap analysis)
 
-## Components to add
+Engineering gaps that block monetization:
 
-```
-src/
-  components/
-    memoir/
-      VolumeCard.tsx        # book cover card with 3D shadow + spine
-      ShelfHeader.tsx       # wordmark + greeting
-      BottomNav.tsx         # 4-icon fixed nav (Shelf only)
-      EditorTopBar.tsx
-      EditorToolbar.tsx     # bottom toolbar in editor
-      PageTransition.tsx    # framer-motion wrapper
-  data/
-    mockVolumes.ts
-    mockEntries.ts
-  routes/
-    index.tsx               # Shelf
-    entry.$entryId.tsx      # Editor
-```
+1. No auth, no cloud sync — interviews live in `localStorage`. Loss = catastrophic for an heirloom product.
+2. No actual audio recording. You use Web Speech API for transcription but throw away the voice. **The voice IS the heirloom.**
+3. No PDF/print export of bound volumes.
+4. No sharing — can't send the volume to family.
+5. No payment integration.
+6. Generic landing — index page is still "Your Library", not pitching the hero use case.
 
-Shadcn usage: `Button` (heavily restyled via `variant="ghost"` + custom classes), `Toaster` (sonner) for the "coming soon" toasts. No Card/Dialog defaults — Volume cards are hand-built so they don't read as SaaS.
+---
 
-## Out of scope for M1
+## Roadmap
 
-- Real persistence, auth, AI features, dark mode, volume detail/TOC, photo/voice/location capture, search, profile screen, page-curl 3D, printed export.
+### Phase 1 — Make it real (2–3 weeks)
+*Goal: a single user can complete an interview, keep it forever, and share it.*
 
-## Acceptance checks
+- Auth + Lovable Cloud persistence (replace localStorage).
+- **Capture and store actual audio** (MediaRecorder → Cloud storage). The voice file is the artifact; transcript is metadata.
+- PDF export of the bound volume (server-side render, archival fonts embedded).
+- Shareable read-only link to a bound volume (`/v/:slug`).
+- Onboarding rewrite: home page leads with "Record your grandparent's life story" — journaling secondary.
 
-- Background is `#F9F9F7` everywhere; no pure black or pure white in UI.
-- Headers and journal body render in Lora; nav/buttons render in Inter.
-- Shelf shows 6 mocked volumes in a 2-col mobile grid with visible 3D shadow + spine.
-- Bottom nav is fixed, ≥44px tap targets, active state on Shelf icon.
-- Tapping a volume navigates to `/entry/{id}` with a ≤250ms slide+fade transition.
-- Editor renders a pre-filled serif sample entry, sticky top bar (Back/Save), and bottom toolbar with 3 ghost icons.
-- Layout looks right at 375px, 414px, 768px, 1280px.
+### Phase 2 — Monetize (2 weeks)
+*Goal: gifting + recurring revenue.*
+
+- Stripe via Lovable Payments. Plus subscription + one-time print SKU.
+- **Gift flow**: buyer pays, recipient gets onboarding email, buyer gets the book.
+- Print fulfillment partner (Lulu API or Blurb API).
+- Paywall at: 2nd interview, PDF export, custom cover, audio download.
+
+### Phase 3 — Differentiation & moat (4–6 weeks)
+*Goal: things competitors can't easily copy.*
+
+- **Voice preservation player**: the bound book has an embedded audio player per chapter — tap a passage, hear it in their actual voice. This is the single most defensible feature. Storyworth can't do it.
+- **Voice cloning (optional, with consent)**: after the storyteller passes, family can hear new chapters narrated in their voice. Handle with extreme care — explicit consent flow, post-mortem flag, ethical guardrails.
+- **Living interviews**: weekly AI call/notification asks one question, builds the volume over a year. Mirrors Storyworth's prompt cadence but voice-first.
+- **Photo binding**: drop in family photos; AI places them at relevant chapters with captions derived from the transcript.
+- **Multi-narrator volumes**: siblings each contribute interviews → woven into one family volume.
+- **Languages**: interview in any language, bind in any language. Massive in immigrant families ("interview Abuela in Spanish, gift the book in English to her grandkids").
+
+### Phase 4 — Scale & community (ongoing)
+- Public (opt-in) Story Library — a curated, beautiful StoryCorps-like archive. Discovery + SEO + emotional marketing.
+- Estate/legacy partnerships (funeral homes, hospice, senior living — they have the audience and the urgency).
+- Educator edition (oral history class projects).
+
+---
+
+## Differentiation, engagement, identity
+
+**Differentiation — pick a sharp position:**
+
+> "Memoir turns a phone call with the people you love into a hardcover book in their voice."
+
+That sentence rules out competing with Day One, Apple Journal, and Notion. It puts you next to Storyworth — and you beat Storyworth on artifact quality, voice, and immediacy.
+
+**Identity — commit to a non-generic aesthetic:**
+
+The current sepia/serif direction is good but not yet distinctive. Push it further:
+
+- Pair a real editorial display face (e.g., **GT Sectra**, **Tiempos Headline**, or **Canela**) with a refined body face (**Tiempos Text**, **Source Serif**). Drop default serifs.
+- Bookbinder's palette: deep oxblood, ink black, raw linen, gold leaf accent. Used sparingly.
+- A signature illustration motif — pressed botanicals, marbled endpapers, gold foil ornaments — appearing only at specific narrative moments (chapter open, closing). Not decorative wallpaper; ceremonial punctuation.
+- One signature animation: the book opening. Make it slower, weightier, with a paper-rustle sound. People will record videos of it. That's your viral surface.
+
+**Engagement loops:**
+
+- Weekly question prompt (push notification + email): one tap to answer by voice → adds a chapter.
+- Streaks framed as chapters, not days ("12 chapters this season").
+- Annual "binding day" — every December, AI binds the year's entries into a Volume. Recurring emotional anchor.
+- Family invites — each invited family member doubles retention via social obligation.
+- "First chapter free" share link — recipient hears 60 seconds of grandma's voice, hits a paywall to hear the rest. Conversion goldmine.
+
+**Originality — three things no competitor has:**
+
+1. **Voice-embedded books** (audio in the artifact itself).
+2. **AI as warm interviewer**, not prompt list — the conversation is the product.
+3. **The 3D bound volume** as both digital artifact and print blueprint.
+
+---
+
+## What to do this week
+
+1. Decide the pivot: is Memoir an "heirloom interview app with journaling" or a "journal with interviews"? My recommendation: the former.
+2. Replace localStorage with Lovable Cloud + capture real audio. Without this, nothing else matters.
+3. Rewrite the home page around the hero use case + a 60-second demo of the bound book opening.
+4. Stand up Stripe with one Plus tier and one Print SKU; ship a gift flow before the next gifting holiday.
+
+If you confirm this direction (heirloom-first, voice-preserving, gifting-monetized), I'll write the implementation plan for Phase 1 next.
