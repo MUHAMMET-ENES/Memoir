@@ -36,6 +36,7 @@ function InterviewRoom() {
   const [binding, setBinding] = useState(false);
   const [muteVoice, setMuteVoice] = useState(false);
   const stoppedRef = useRef(false);
+  const pendingAudioPathRef = useRef<string | null>(null);
   const interviewRef = useRef<Interview | undefined>(interview);
   useEffect(() => {
     interviewRef.current = interview;
