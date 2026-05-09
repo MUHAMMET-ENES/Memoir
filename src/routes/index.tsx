@@ -1,19 +1,17 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { ShelfHeader } from "@/components/memoir/ShelfHeader";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { Mic, Sparkles } from "lucide-react";
 import { BottomNav } from "@/components/memoir/BottomNav";
-import { StackedVolumeCard } from "@/components/memoir/StackedVolumeCard";
 import { PageTransition } from "@/components/memoir/PageTransition";
-import { SummaryCard } from "@/components/memoir/SummaryCard";
-import { allEntries, getYears } from "@/data/mockEntries";
+import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Memoir — Your Life, Beautifully Remembered" },
+      { title: "Memoir — Heirloom interviews with the people you love" },
       {
         name: "description",
         content:
-          "A private, beautifully typeset journal. Your life, kept on your device — and worth remembering.",
+          "Record your grandparent's life story. A warm AI interviewer asks the right questions. We bind it as a hardcover heirloom.",
       },
     ],
   }),
@@ -21,47 +19,80 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
-  const years = getYears();
-  const firstYear = years[years.length - 1];
-  const lastYear = years[0];
-  const range = firstYear === lastYear ? `${firstYear}` : `${firstYear} – ${lastYear}`;
+  const { user } = useAuth();
 
   return (
     <PageTransition>
-      <div className="min-h-screen pb-28">
-        <ShelfHeader />
-        <main className="mx-auto max-w-3xl px-6">
-          <SummaryCard
-            scope="library"
-            label="The Memoir"
-            entries={allEntries}
-            heading="The story so far"
-          />
+      <main className="min-h-dvh pb-32">
+        <header className="mx-auto flex max-w-3xl items-center justify-between px-6 pt-8">
+          <span className="font-serif text-xl tracking-tight text-foreground">Memoir</span>
+          {user ? (
+            <Link to="/heirloom" className="font-sans text-[11px] uppercase tracking-[0.25em] text-[color:var(--sepia)]">
+              Your interviews →
+            </Link>
+          ) : (
+            <Link to="/login" className="font-sans text-[11px] uppercase tracking-[0.25em] text-[color:var(--sepia)]">
+              Sign in
+            </Link>
+          )}
+        </header>
 
-          <div className="mb-6 flex items-end justify-between">
-            <h2 className="font-serif text-xl text-foreground">Your Library</h2>
-            <span className="font-sans text-[10px] uppercase tracking-[0.22em] text-[color:var(--ink-tertiary)]">
-              {allEntries.length} entries
+        <section className="mx-auto mt-20 max-w-3xl px-6 sm:mt-28">
+          <div className="flex items-center gap-2">
+            <Sparkles size={14} className="text-[color:var(--sepia)]" />
+            <span className="font-sans text-[10px] uppercase tracking-[0.32em] text-[color:var(--ink-tertiary)]">
+              Heirloom interviews
             </span>
           </div>
+          <h1 className="mt-5 font-serif text-4xl leading-[1.1] text-foreground sm:text-6xl">
+            Record your grandparent's life story.
+            <br />
+            <span className="italic text-[color:var(--sepia)]">Keep it forever.</span>
+          </h1>
+          <p className="mt-6 max-w-xl font-serif text-[18px] leading-[1.6] text-[color:var(--ink-tertiary)]">
+            A warm AI interviewer sits with someone you love and asks the questions you wish you'd
+            thought to ask. We listen, transcribe every word, and bind it as a hardcover heirloom —
+            in their voice.
+          </p>
 
-          <div className="mx-auto max-w-[260px]">
-            <StackedVolumeCard
+          <div className="mt-9 flex flex-wrap items-center gap-3">
+            <Link
+              to={user ? "/heirloom" : "/login"}
+              search={user ? undefined : { redirect: "/heirloom" }}
+              className="inline-flex items-center gap-2 rounded-md bg-foreground px-5 py-3 font-sans text-[11px] uppercase tracking-[0.28em] text-[color:var(--background)] transition-opacity hover:opacity-90"
+            >
+              <Mic size={14} strokeWidth={1.8} /> Begin an interview
+            </Link>
+            <Link
               to="/library"
-              eyebrow="Memoir"
-              title="The Memoir"
-              subtitle="A complete life in volumes"
-              footer={`${range} · ${years.length} ${years.length === 1 ? "year" : "years"}`}
-              color="sepia"
-            />
+              className="font-sans text-[11px] uppercase tracking-[0.25em] text-[color:var(--ink-tertiary)] hover:text-foreground"
+            >
+              Or write in your own journal →
+            </Link>
           </div>
 
-          <p className="mt-16 text-center font-serif italic text-sm text-[color:var(--ink-tertiary)]">
-            Everything here lives on your device.
+          <ol className="mt-24 grid gap-10 sm:grid-cols-3">
+            {[
+              { n: "I", t: "Sit down together", d: "Open the app, hand them the phone. The interviewer welcomes them by name." },
+              { n: "II", t: "They simply talk", d: "Gentle questions, one at a time. Their voice is recorded. Every word is kept." },
+              { n: "III", t: "Bind the volume", d: "We arrange it into chapters with a literary editor's care. A hardcover heirloom for the family." },
+            ].map((s) => (
+              <li key={s.n}>
+                <p className="font-serif italic text-[color:var(--sepia)]">{s.n}.</p>
+                <h3 className="mt-2 font-serif text-xl text-foreground">{s.t}</h3>
+                <p className="mt-2 font-serif text-[15px] leading-[1.6] text-[color:var(--ink-tertiary)]">{s.d}</p>
+              </li>
+            ))}
+          </ol>
+
+          <p className="mt-24 text-center font-serif italic text-sm text-[color:var(--ink-tertiary)]">
+            "I should record my grandma before it's too late."
+            <br />
+            You will. Today.
           </p>
-        </main>
+        </section>
         <BottomNav />
-      </div>
+      </main>
     </PageTransition>
   );
 }
