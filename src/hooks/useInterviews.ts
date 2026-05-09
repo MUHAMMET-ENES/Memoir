@@ -127,7 +127,8 @@ export function useInterviews() {
       if (patch.is_public !== undefined) dbPatch.is_public = patch.is_public;
       const { data, error } = await supabase
         .from("interviews")
-        .update(dbPatch)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .update(dbPatch as any)
         .eq("id", id)
         .select()
         .single();
@@ -146,7 +147,8 @@ export function useInterviews() {
       const nextTurns = [...current.turns, { ...turn, at: Date.now() }];
       const optimistic = { ...current, turns: nextTurns };
       setInterviews((prev) => prev.map((x) => (x.id === id ? optimistic : x)));
-      await supabase.from("interviews").update({ turns: nextTurns }).eq("id", id);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await supabase.from("interviews").update({ turns: nextTurns } as any).eq("id", id);
     },
     [interviews],
   );
