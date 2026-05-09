@@ -212,7 +212,53 @@ function BoundVolume() {
           >
             <List size={13} /> Contents
           </button>
+          <button
+            onClick={() => setShareOpen(true)}
+            className="inline-flex items-center gap-1.5 font-sans text-[11px] uppercase tracking-[0.22em] text-[color:var(--ink-tertiary)] hover:text-foreground"
+          >
+            <Share2 size={13} /> Share
+          </button>
         </header>
+
+        {shareOpen && (
+          <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 px-6 print:hidden" onClick={() => setShareOpen(false)}>
+            <div onClick={(e) => e.stopPropagation()} className="w-full max-w-md rounded-[14px] border border-border bg-[color:var(--card)] p-6 shadow-2xl">
+              <div className="flex items-center justify-between">
+                <p className="font-sans text-[10px] uppercase tracking-[0.3em] text-[color:var(--sepia)]">Share this volume</p>
+                <button onClick={() => setShareOpen(false)} className="text-[color:var(--ink-tertiary)]"><X size={16} /></button>
+              </div>
+              <p className="mt-4 font-serif text-[15px] text-foreground">
+                {iv.is_public ? "Anyone with the link can read this volume." : "This volume is private."}
+              </p>
+              {iv.is_public && (
+                <div className="mt-4 flex items-center gap-2 rounded-md border border-border bg-[color:var(--paper-sunken)]/40 px-3 py-2">
+                  <code className="flex-1 truncate font-sans text-[12px] text-foreground">{`${typeof window !== "undefined" ? window.location.origin : ""}/v/${iv.share_slug}`}</code>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(`${window.location.origin}/v/${iv.share_slug}`);
+                      toast.success("Link copied.");
+                    }}
+                    className="font-sans text-[10px] uppercase tracking-[0.25em] text-[color:var(--sepia)] hover:underline"
+                  >
+                    Copy
+                  </button>
+                </div>
+              )}
+              <button
+                onClick={() => void update(iv.id, { is_public: !iv.is_public })}
+                className="mt-5 w-full rounded-md bg-foreground px-4 py-2.5 font-sans text-[11px] uppercase tracking-[0.25em] text-[color:var(--background)] hover:opacity-90"
+              >
+                {iv.is_public ? "Make private" : "Create share link"}
+              </button>
+              <button
+                onClick={() => window.print()}
+                className="mt-3 w-full inline-flex items-center justify-center gap-2 rounded-md border border-border px-4 py-2.5 font-sans text-[11px] uppercase tracking-[0.25em] text-foreground hover:bg-[color:var(--paper-sunken)]/50"
+              >
+                <Printer size={13} /> Save as PDF
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Book stage */}
         <div
