@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ChevronLeft, ChevronRight, List, Printer, Sparkles, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, List, Printer, Share2, Sparkles, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { PageTransition } from "@/components/memoir/PageTransition";
 import { useInterviews } from "@/hooks/useInterviews";
 import type { BoundVolume as BoundVolumeData } from "@/hooks/useInterviews";
+import { useRequireAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/heirloom/$interviewId/bound")({
   head: () => ({
@@ -98,8 +99,9 @@ function buildPages(v: BoundVolumeData, iv: { title: string; subjectName: string
 }
 
 function BoundVolume() {
+  const { ready } = useRequireAuth();
   const { interviewId } = Route.useParams();
-  const { interviews } = useInterviews();
+  const { interviews, update } = useInterviews();
   const iv = useMemo(
     () => interviews.find((x) => x.id === interviewId),
     [interviews, interviewId],
@@ -114,6 +116,7 @@ function BoundVolume() {
   const [tocOpen, setTocOpen] = useState(false);
   const [dragDx, setDragDx] = useState(0);
   const [touchStart, setTouchStart] = useState<{ x: number; y: number; t: number } | null>(null);
+  const [shareOpen, setShareOpen] = useState(false);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -123,6 +126,14 @@ function BoundVolume() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [pages.length]);
+
+  if (!ready) {
+    return (
+      <main className="grid min-h-dvh place-items-center">
+        <p className="font-serif italic text-[color:var(--ink-tertiary)]">…</p>
+      </main>
+    );
+  }
 
   if (!iv || !iv.bound) {
     return (
