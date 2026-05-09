@@ -14,13 +14,84 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      interviews: {
+        Row: {
+          bound: Json | null
+          created_at: string
+          id: string
+          is_public: boolean
+          relation: string
+          share_slug: string
+          status: string
+          subject_name: string
+          theme: string
+          title: string
+          turns: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bound?: Json | null
+          created_at?: string
+          id?: string
+          is_public?: boolean
+          relation?: string
+          share_slug?: string
+          status?: string
+          subject_name: string
+          theme?: string
+          title: string
+          turns?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bound?: Json | null
+          created_at?: string
+          id?: string
+          is_public?: boolean
+          relation?: string
+          share_slug?: string
+          status?: string
+          subject_name?: string
+          theme?: string
+          title?: string
+          turns?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      gen_share_slug: { Args: never; Returns: string }
     }
     Enums: {
       [_ in never]: never

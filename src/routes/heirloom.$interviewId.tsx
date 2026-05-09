@@ -7,6 +7,8 @@ import { PageTransition } from "@/components/memoir/PageTransition";
 import { supabase } from "@/integrations/supabase/client";
 import { useInterviews, type Interview } from "@/hooks/useInterviews";
 import { speak, useSpeech } from "@/hooks/useSpeech";
+import { useAudioRecorder } from "@/hooks/useAudioRecorder";
+import { useRequireAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/heirloom/$interviewId")({
   head: () => ({
@@ -19,6 +21,7 @@ export const Route = createFileRoute("/heirloom/$interviewId")({
 });
 
 function InterviewRoom() {
+  const { user, ready } = useRequireAuth();
   const { interviewId } = Route.useParams();
   const navigate = useNavigate();
   const { interviews, update, appendTurn } = useInterviews();
@@ -28,10 +31,12 @@ function InterviewRoom() {
   );
 
   const speech = useSpeech();
+  const audio = useAudioRecorder();
   const [hostThinking, setHostThinking] = useState(false);
   const [binding, setBinding] = useState(false);
   const [muteVoice, setMuteVoice] = useState(false);
   const stoppedRef = useRef(false);
+  const pendingAudioPathRef = useRef<string | null>(null);
   const interviewRef = useRef<Interview | undefined>(interview);
   useEffect(() => {
     interviewRef.current = interview;
@@ -50,6 +55,14 @@ function InterviewRoom() {
       window.speechSynthesis?.cancel();
     };
   }, []);
+
+  if (!ready) {
+    return (
+      <main className="grid min-h-dvh place-items-center">
+        <p className="font-serif italic text-[color:var(--ink-tertiary)]">…</p>
+      </main>
+    );
+  }
 
   if (!interview) {
     return (
@@ -96,9 +109,25 @@ function InterviewRoom() {
     }
   }
 
-  function handleAnswer() {
+  async function handleAnswer() {
     if (speech.listening) {
       speech.stop();
+      // Stop audio capture; upload happens after speech onFinal fires
+      const blob = await audio.stop();
+      if (blob && user && interviewRef.current) {
+        const turnIndex = interviewRef.current.turns.length; // index of the upcoming subject turn
+        const ext = blob.type.includes("mp4") ? "m4a" : "webm";
+        const path = `${user.id}/${interviewRef.current.id}/${turnIndex}.${ext}`;
+        try {
+          await supabase.storage
+            .from("interview-audio")
+            .upload(path, blob, { contentType: blob.type, upsert: true });
+          // Stash on a ref so the speech onFinal handler can attach it
+          pendingAudioPathRef.current = path;
+        } catch (e) {
+          console.error("audio upload failed", e);
+        }
+      }
       return;
     }
     if (!speech.supported) {
@@ -107,9 +136,23 @@ function InterviewRoom() {
       );
       return;
     }
+    // Begin audio capture in parallel with speech recognition
+    if (audio.supported) {
+      try {
+        await audio.start();
+      } catch (e) {
+        console.warn("Audio capture not started", e);
+      }
+    }
     speech.start((finalText) => {
       if (!finalText.trim()) return;
-      appendTurn(interviewId, { role: "subject", text: finalText.trim() });
+      const audioPath = pendingAudioPathRef.current;
+      pendingAudioPathRef.current = null;
+      void appendTurn(interviewId, {
+        role: "subject",
+        text: finalText.trim(),
+        ...(audioPath ? { audio_path: audioPath } : {}),
+      });
       // Slight delay so UI updates before host responds
       setTimeout(() => void askNext("next"), 400);
     });

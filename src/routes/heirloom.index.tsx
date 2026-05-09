@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useInterviews } from "@/hooks/useInterviews";
+import { useRequireAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/heirloom/")({
   head: () => ({
@@ -35,6 +36,7 @@ const THEMES = [
 ];
 
 function HeirloomIndex() {
+  const { ready } = useRequireAuth();
   const { interviews, create, remove } = useInterviews();
   const navigate = useNavigate();
 
@@ -43,20 +45,32 @@ function HeirloomIndex() {
   const [theme, setTheme] = useState(THEMES[0]);
   const [customTheme, setCustomTheme] = useState("");
 
-  const begin = () => {
+  const begin = async () => {
     if (!name.trim()) {
       toast("Tell us their name first.");
       return;
     }
     const finalTheme = customTheme.trim() || theme;
-    const id = create({
+    const id = await create({
       subjectName: name.trim(),
       relation,
       theme: finalTheme,
       title: `${name.trim()} on ${finalTheme.toLowerCase()}`,
     });
+    if (!id) {
+      toast.error("Couldn't start interview.");
+      return;
+    }
     navigate({ to: "/heirloom/$interviewId", params: { interviewId: id } });
   };
+
+  if (!ready) {
+    return (
+      <main className="grid min-h-dvh place-items-center">
+        <p className="font-serif italic text-[color:var(--ink-tertiary)]">…</p>
+      </main>
+    );
+  }
 
   return (
     <PageTransition>
