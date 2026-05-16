@@ -1,8 +1,11 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { createFileRoute, Link, useSearch } from "@tanstack/react-router";
 import { ChevronRight, Cloud, HardDrive, Lock, Pencil } from "lucide-react";
 import { toast } from "sonner";
 
 import { BottomNav } from "@/components/memoir/BottomNav";
+import { GiftDialog } from "@/components/memoir/GiftDialog";
+import { PaywallDialog } from "@/components/memoir/PaywallDialog";
 import { PageTransition } from "@/components/memoir/PageTransition";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
@@ -12,15 +15,17 @@ import {
   fireReminderNotification,
   requestNotificationPermission,
 } from "@/hooks/useDailyReminder";
-import {
-  MOCK_STATS,
-  TIER_META,
-  useProfile,
-  type FontChoice,
-  type PaperTone,
-} from "@/hooks/useProfile";
+import { useProfile, type FontChoice, type PaperTone } from "@/hooks/useProfile";
+import { useSubscription } from "@/hooks/useSubscription";
+import { useInterviews } from "@/hooks/useInterviews";
+import { TIER_META } from "@/lib/subscription";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/you")({
+  validateSearch: (s: Record<string, unknown>) => ({
+    checkout: typeof s.checkout === "string" ? s.checkout : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "You — Memoir" },
@@ -125,7 +130,20 @@ function SegButton({
 
 function YouPage() {
   const { profile, update, reset } = useProfile();
-  const tier = TIER_META[profile.tier];
+  const { tier, refresh, isPaid } = useSubscription();
+  const { interviews } = useInterviews();
+  const { signOut } = useAuth();
+  const search = useSearch({ from: "/you" }) as { checkout?: string };
+  const [paywallOpen, setPaywallOpen] = useState(false);
+  const [giftOpen, setGiftOpen] = useState(false);
+  const tierMeta = TIER_META[tier];
+
+  useEffect(() => {
+    if (search.checkout === "success") {
+      toast.success("Welcome to Memoir Plus.");
+      void refresh();
+    }
+  }, [search.checkout, refresh]);
 
   return (
     <PageTransition>
@@ -153,9 +171,12 @@ function YouPage() {
 
           {/* Stats strip */}
           <div className="mx-auto mt-8 grid max-w-sm grid-cols-3 border-y border-border py-4">
-            <Stat value={MOCK_STATS.totalEntries} label="Entries" />
-            <Stat value={MOCK_STATS.currentStreak} label="Day streak" />
-            <Stat value={MOCK_STATS.volumesPrinted} label="Volumes" />
+            <Stat value={interviews.length} label="Interviews" />
+            <Stat
+              value={interviews.filter((i) => i.status === "bound").length}
+              label="Bound"
+            />
+            <Stat value={interviews.filter((i) => i.is_public).length} label="Shared" />
           </div>
         </header>
 
@@ -325,15 +346,24 @@ function YouPage() {
             onClick={() => toast.success("Preparing your export…")}
           />
           <Row
-            label="Delete all entries"
-            hint="This cannot be undone."
+            label="Delete account"
+            hint="Removes all interviews, audio, and your profile."
             chevron
             onClick={() =>
-              toast("Are you sure?", {
-                description: "This will permanently delete every entry.",
+              toast("Delete your account?", {
+                description: "This cannot be undone.",
                 action: {
                   label: "Delete",
-                  onClick: () => toast.success("All entries removed."),
+                  onClick: async () => {
+                    const { error } = await supabase.functions.invoke("delete-account");
+                    if (error) {
+                      toast.error("Couldn't delete account.");
+                      return;
+                    }
+                    await signOut();
+                    toast.success("Account deleted.");
+                    window.location.href = "/";
+                  },
                 },
               })
             }
@@ -349,29 +379,48 @@ function YouPage() {
               </div>
               <div className="mt-2 flex items-baseline justify-between gap-3">
                 <h3 className="font-serif text-2xl font-medium text-foreground">
-                  {tier.label}
+                  {tierMeta.label}
                 </h3>
                 <span className="font-sans text-[10px] uppercase tracking-[0.25em] text-[color:var(--ink-tertiary)]">
-                  {profile.tier === "free" ? "Free" : "Active"}
+                  {isPaid ? "Active" : "Free"}
                 </span>
               </div>
               <p className="mt-1 font-serif italic text-sm text-[color:var(--ink-tertiary)]">
-                {tier.tagline}
+                {tierMeta.tagline}
               </p>
-              <button
-                onClick={() => toast("Plans coming soon")}
-                className="mt-4 inline-flex items-center gap-2 rounded-md bg-foreground px-4 py-2 font-sans text-[11px] uppercase tracking-[0.25em] text-[color:var(--background)] transition-opacity hover:opacity-90"
-              >
-                {profile.tier === "free" ? "Upgrade" : "Manage plan"}
-              </button>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <button
+                  onClick={async () => {
+                    if (isPaid) {
+                      const { data, error } = await supabase.functions.invoke("stripe-portal");
+                      if (error || data?.error) {
+                        toast.error(data?.error ?? "Couldn't open billing portal.");
+                        return;
+                      }
+                      if (data?.url) window.location.href = data.url as string;
+                      return;
+                    }
+                    setPaywallOpen(true);
+                  }}
+                  className="inline-flex items-center gap-2 rounded-md bg-foreground px-4 py-2 font-sans text-[11px] uppercase tracking-[0.25em] text-[color:var(--background)] transition-opacity hover:opacity-90"
+                >
+                  {isPaid ? "Manage plan" : "Upgrade"}
+                </button>
+                <button
+                  onClick={() => setGiftOpen(true)}
+                  className="inline-flex items-center gap-2 rounded-md border border-border px-4 py-2 font-sans text-[11px] uppercase tracking-[0.25em] text-foreground"
+                >
+                  Give as gift
+                </button>
+              </div>
             </div>
           </div>
         </Section>
 
         {/* About */}
         <Section eyebrow="Colophon" title="About">
-          <Row label="Privacy policy" chevron onClick={() => toast("Opening privacy policy…")} />
-          <Row label="Terms of service" chevron onClick={() => toast("Opening terms…")} />
+          <Row label="Privacy policy" chevron onClick={() => { window.location.href = "/privacy"; }} />
+          <Row label="Terms of service" chevron onClick={() => { window.location.href = "/terms"; }} />
           <Row label="Support" hint="hello@memoir.app" chevron onClick={() => toast("Opening support…")} />
           <Row label="Version" hint="1.0.0 · Build 2026.05" />
           <Row
@@ -390,10 +439,16 @@ function YouPage() {
             to="/"
             className="font-sans text-[10px] uppercase tracking-[0.4em] text-[color:var(--ink-tertiary)] hover:text-foreground"
           >
-            ← Back to the shelf
+            ← Back home
           </Link>
         </div>
 
+        <PaywallDialog
+          open={paywallOpen}
+          onOpenChange={setPaywallOpen}
+          reason="second_interview"
+        />
+        <GiftDialog open={giftOpen} onOpenChange={setGiftOpen} />
         <BottomNav />
       </main>
     </PageTransition>

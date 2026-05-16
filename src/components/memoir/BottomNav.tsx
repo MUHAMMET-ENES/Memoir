@@ -1,4 +1,4 @@
-import { BookOpen, PenLine, Search, User } from "lucide-react";
+import { BookOpen, Mic, Share2, User } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Link, useLocation } from "@tanstack/react-router";
 
@@ -12,23 +12,22 @@ type NavItem = {
 
 const items: NavItem[] = [
   {
-    label: "Shelf",
+    label: "Home",
     icon: BookOpen,
     to: "/",
     match: (p) => p === "/",
   },
   {
-    label: "Write",
-    icon: PenLine,
-    to: "/entry/$entryId",
-    params: { entryId: "default" },
-    match: (p) => p.startsWith("/entry"),
+    label: "Record",
+    icon: Mic,
+    to: "/heirloom",
+    match: (p) => p.startsWith("/heirloom"),
   },
   {
-    label: "Search",
-    icon: Search,
-    to: "/search",
-    match: (p) => p === "/search",
+    label: "Share",
+    icon: Share2,
+    to: "/library",
+    match: (p) => p === "/library" || p.startsWith("/v/"),
   },
   {
     label: "You",

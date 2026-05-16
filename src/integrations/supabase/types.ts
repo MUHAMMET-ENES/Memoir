@@ -67,6 +67,11 @@ export type Database = {
           created_at: string
           display_name: string | null
           id: string
+          revenuecat_app_user_id: string | null
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          subscription_expires_at: string | null
+          subscription_tier: string
           updated_at: string
           user_id: string
         }
@@ -74,6 +79,11 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id?: string
+          revenuecat_app_user_id?: string | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          subscription_expires_at?: string | null
+          subscription_tier?: string
           updated_at?: string
           user_id: string
         }
@@ -81,8 +91,79 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id?: string
+          revenuecat_app_user_id?: string | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          subscription_expires_at?: string | null
+          subscription_tier?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      gift_purchases: {
+        Row: {
+          buyer_user_id: string
+          created_at: string
+          id: string
+          plan: string
+          recipient_email: string
+          recipient_name: string | null
+          redeem_token: string
+          redeemed_at: string | null
+          status: string
+          stripe_session_id: string | null
+        }
+        Insert: {
+          buyer_user_id: string
+          created_at?: string
+          id?: string
+          plan: string
+          recipient_email: string
+          recipient_name?: string | null
+          redeem_token?: string
+          redeemed_at?: string | null
+          status?: string
+          stripe_session_id?: string | null
+        }
+        Update: {
+          buyer_user_id?: string
+          created_at?: string
+          id?: string
+          plan?: string
+          recipient_email?: string
+          recipient_name?: string | null
+          redeem_token?: string
+          redeemed_at?: string | null
+          status?: string
+          stripe_session_id?: string | null
+        }
+        Relationships: []
+      }
+      print_waitlist: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          interview_id: string | null
+          user_id: string
+          volume_title: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          interview_id?: string | null
+          user_id: string
+          volume_title?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          interview_id?: string | null
+          user_id?: string
+          volume_title?: string | null
         }
         Relationships: []
       }
@@ -92,6 +173,18 @@ export type Database = {
     }
     Functions: {
       gen_share_slug: { Args: never; Returns: string }
+      profile_has_plus: { Args: { uid: string }; Returns: boolean }
+      set_subscription_tier: {
+        Args: {
+          p_expires_at?: string | null
+          p_stripe_customer_id?: string | null
+          p_stripe_subscription_id?: string | null
+          p_tier: string
+          p_user_id: string
+        }
+        Returns: undefined
+      }
+      user_interview_count: { Args: { uid: string }; Returns: number }
     }
     Enums: {
       [_ in never]: never

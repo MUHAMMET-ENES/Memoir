@@ -1,69 +1,48 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
-import { EditorTopBar } from "@/components/memoir/EditorTopBar";
-import { EditorToolbar } from "@/components/memoir/EditorToolbar";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { ChevronLeft, Sparkles } from "lucide-react";
 import { PageTransition } from "@/components/memoir/PageTransition";
-import {
-  Attachments,
-  useAttachmentActions,
-  type Attachment,
-} from "@/components/memoir/Attachments";
-import { getEntry } from "@/data/mockEntries";
+import { BottomNav } from "@/components/memoir/BottomNav";
 
 export const Route = createFileRoute("/entry/$entryId")({
   head: () => ({
     meta: [
-      { title: "Entry — Memoir" },
-      { name: "description", content: "Write today's entry. Private. On-device." },
+      { title: "Journal — Coming soon — Memoir" },
+      { name: "description", content: "Personal journaling is coming soon. Record heirloom interviews today." },
     ],
   }),
-  component: EntryPage,
+  component: EntryComingSoon,
 });
 
-function EntryPage() {
-  const { entryId } = Route.useParams();
-  const initial = getEntry(entryId);
-  const [title, setTitle] = useState(initial.title);
-  const [body, setBody] = useState(initial.body);
-  const [attachments, setAttachments] = useState<Attachment[]>([]);
-  const attachmentActions = useAttachmentActions({ attachments, setAttachments });
-
+function EntryComingSoon() {
   return (
     <PageTransition>
-      <div className="min-h-screen pb-28">
-        <EditorTopBar weekday={initial.weekday} date={initial.date} />
-        <main className="mx-auto max-w-[680px] px-6 py-10 sm:py-14">
-          <input
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="Title your day…"
-            className="block w-full border-0 bg-transparent p-0 font-serif text-3xl font-medium leading-tight tracking-tight text-foreground placeholder:text-[color:var(--ink-tertiary)]/60 focus:outline-none focus:ring-0 sm:text-4xl"
-            aria-label="Entry title"
-          />
-          <p className="mt-3 font-sans text-[10px] uppercase tracking-[0.3em] text-[color:var(--ink-tertiary)]">
-            {initial.weekday} · {initial.date}
+      <div className="min-h-dvh pb-28">
+        <header className="mx-auto max-w-2xl px-6 pt-10">
+          <Link
+            to="/"
+            className="inline-flex items-center gap-1 font-sans text-[11px] uppercase tracking-[0.22em] text-[color:var(--ink-tertiary)] hover:text-foreground"
+          >
+            <ChevronLeft size={14} /> Home
+          </Link>
+          <div className="mt-8 flex items-center gap-2">
+            <Sparkles size={14} className="text-[color:var(--sepia)]" />
+            <span className="font-sans text-[10px] uppercase tracking-[0.32em] text-[color:var(--ink-tertiary)]">
+              Personal journal
+            </span>
+          </div>
+          <h1 className="mt-3 font-serif text-3xl text-foreground">Coming soon.</h1>
+          <p className="mt-4 max-w-md font-serif italic text-[15px] leading-relaxed text-[color:var(--ink-tertiary)]">
+            Memoir is focused on heirloom interviews — preserving family voices as bound volumes.
+            Personal journaling will return in a future release.
           </p>
-          <div className="mt-1 h-px w-12 bg-[color:var(--ink-tertiary)]/30" />
-          <textarea
-            value={body}
-            onChange={(e) => setBody(e.target.value)}
-            placeholder="Begin where you are."
-            rows={16}
-            className="mt-8 block w-full resize-none border-0 bg-transparent p-0 font-serif text-[18px] leading-[1.75] text-foreground placeholder:text-[color:var(--ink-tertiary)]/60 focus:outline-none focus:ring-0"
-            aria-label="Entry body"
-          />
-          <Attachments
-            attachments={attachments}
-            setAttachments={setAttachments}
-            actions={attachmentActions}
-          />
-        </main>
-        <EditorToolbar
-          onAddPhoto={attachmentActions.pickPhoto}
-          onAddVoice={attachmentActions.recordVoice}
-          onAddLocation={attachmentActions.pinLocation}
-        />
-        {attachmentActions.portal}
+          <Link
+            to="/heirloom"
+            className="mt-8 inline-flex rounded-md bg-foreground px-4 py-2.5 font-sans text-[11px] uppercase tracking-[0.25em] text-[color:var(--background)]"
+          >
+            Record an interview →
+          </Link>
+        </header>
+        <BottomNav />
       </div>
     </PageTransition>
   );

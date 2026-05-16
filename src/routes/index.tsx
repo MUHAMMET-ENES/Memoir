@@ -64,10 +64,10 @@ function Index() {
               <Mic size={14} strokeWidth={1.8} /> Begin an interview
             </Link>
             <Link
-              to="/library"
+              to="/you"
               className="font-sans text-[11px] uppercase tracking-[0.25em] text-[color:var(--ink-tertiary)] hover:text-foreground"
             >
-              Or write in your own journal →
+              Give Memoir as a gift →
             </Link>
           </div>
 

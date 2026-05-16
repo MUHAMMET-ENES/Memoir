@@ -8,7 +8,9 @@ import { PageTransition } from "@/components/memoir/PageTransition";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { PaywallDialog } from "@/components/memoir/PaywallDialog";
 import { useInterviews } from "@/hooks/useInterviews";
+import { useSubscription } from "@/hooks/useSubscription";
 import { useRequireAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/heirloom/")({
@@ -38,7 +40,9 @@ const THEMES = [
 function HeirloomIndex() {
   const { ready } = useRequireAuth();
   const { interviews, create, remove } = useInterviews();
+  const { canCreateInterview } = useSubscription();
   const navigate = useNavigate();
+  const [paywallOpen, setPaywallOpen] = useState(false);
 
   const [name, setName] = useState("");
   const [relation, setRelation] = useState("grandmother");
@@ -50,18 +54,26 @@ function HeirloomIndex() {
       toast("Tell us their name first.");
       return;
     }
+    if (!canCreateInterview(interviews.length)) {
+      setPaywallOpen(true);
+      return;
+    }
     const finalTheme = customTheme.trim() || theme;
-    const id = await create({
+    const result = await create({
       subjectName: name.trim(),
       relation,
       theme: finalTheme,
       title: `${name.trim()} on ${finalTheme.toLowerCase()}`,
     });
-    if (!id) {
-      toast.error("Couldn't start interview.");
+    if ("error" in result) {
+      if (result.error === "paywall") {
+        setPaywallOpen(true);
+      } else {
+        toast.error("Couldn't start interview.");
+      }
       return;
     }
-    navigate({ to: "/heirloom/$interviewId", params: { interviewId: id } });
+    navigate({ to: "/heirloom/$interviewId", params: { interviewId: result.id } });
   };
 
   if (!ready) {
@@ -77,10 +89,10 @@ function HeirloomIndex() {
       <main className="min-h-dvh pb-32">
         <header className="mx-auto max-w-2xl px-6 pt-10">
           <Link
-            to="/library"
+            to="/"
             className="inline-flex items-center gap-1 font-sans text-[11px] uppercase tracking-[0.22em] text-[color:var(--ink-tertiary)] hover:text-foreground"
           >
-            <ChevronLeft size={14} /> Library
+            <ChevronLeft size={14} /> Home
           </Link>
           <div className="mt-8 flex items-center gap-2">
             <Sparkles size={14} className="text-[color:var(--sepia)]" />
@@ -220,6 +232,11 @@ function HeirloomIndex() {
           </section>
         )}
 
+        <PaywallDialog
+          open={paywallOpen}
+          onOpenChange={setPaywallOpen}
+          reason="second_interview"
+        />
         <BottomNav />
       </main>
     </PageTransition>

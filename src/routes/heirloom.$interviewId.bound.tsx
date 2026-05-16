@@ -4,8 +4,12 @@ import { ChevronLeft, ChevronRight, List, Printer, Share2, Sparkles, X } from "l
 import { toast } from "sonner";
 
 import { PageTransition } from "@/components/memoir/PageTransition";
+import { PaywallDialog } from "@/components/memoir/PaywallDialog";
+import { PrintWaitlistDialog } from "@/components/memoir/PrintWaitlistDialog";
+import { VoicePlayback } from "@/components/memoir/VoicePlayback";
 import { useInterviews } from "@/hooks/useInterviews";
 import type { BoundVolume as BoundVolumeData } from "@/hooks/useInterviews";
+import { useSubscription } from "@/hooks/useSubscription";
 import { useRequireAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/heirloom/$interviewId/bound")({
@@ -117,6 +121,29 @@ function BoundVolume() {
   const [dragDx, setDragDx] = useState(0);
   const [touchStart, setTouchStart] = useState<{ x: number; y: number; t: number } | null>(null);
   const [shareOpen, setShareOpen] = useState(false);
+  const [paywallOpen, setPaywallOpen] = useState(false);
+  const [printOpen, setPrintOpen] = useState(false);
+  const { canExportPdf } = useSubscription();
+
+  const audioByAnswerText = useMemo(() => {
+    const map = new Map<string, string>();
+    if (!iv?.turns) return map;
+    for (const t of iv.turns) {
+      if (t.role === "subject" && t.audio_path) {
+        map.set(t.text.trim().slice(0, 120), t.audio_path);
+      }
+    }
+    return map;
+  }, [iv?.turns]);
+
+  function findAudioForAnswer(text: string): string | undefined {
+    const key = text.trim().slice(0, 120);
+    if (audioByAnswerText.has(key)) return audioByAnswerText.get(key);
+    for (const [k, path] of audioByAnswerText) {
+      if (text.includes(k.slice(0, 40)) || k.includes(text.slice(0, 40))) return path;
+    }
+    return undefined;
+  }
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -319,7 +346,11 @@ function BoundVolume() {
                         : "inset -10px 0 22px -16px rgba(0,0,0,0.25)",
                     }}
                   >
-                    <PageFace page={page} side="front" />
+                    <PageFace
+                      page={page}
+                      side="front"
+                      findAudioForAnswer={findAudioForAnswer}
+                    />
                   </div>
                   {/* Back face (what shows after flipping) */}
                   <div
@@ -331,7 +362,12 @@ function BoundVolume() {
                       boxShadow: "inset 10px 0 22px -16px rgba(0,0,0,0.25)",
                     }}
                   >
-                    <PageBack page={pages[i + 1]} index={i + 1} total={total} />
+                    <PageBack
+                      page={pages[i + 1]}
+                      index={i + 1}
+                      total={total}
+                      findAudioForAnswer={findAudioForAnswer}
+                    />
                   </div>
                 </div>
               );
@@ -425,22 +461,39 @@ function BoundVolume() {
                 </div>
                 <div className="flex gap-4">
                   <button
-                    onClick={() => window.print()}
+                    onClick={() => {
+                      if (!canExportPdf()) {
+                        setPaywallOpen(true);
+                        return;
+                      }
+                      window.print();
+                    }}
                     className="inline-flex items-center gap-1.5 font-sans text-[11px] uppercase tracking-[0.25em] text-[color:var(--ink-tertiary)] hover:text-foreground"
                   >
-                    <Printer size={13} /> Print
+                    <Printer size={13} /> Print / PDF
                   </button>
                   <button
-                    onClick={() => toast("Hardcover printing coming soon.")}
+                    onClick={() => setPrintOpen(true)}
                     className="font-sans text-[11px] uppercase tracking-[0.25em] text-[color:var(--sepia)] hover:underline"
                   >
-                    Order →
+                    Order hardcover →
                   </button>
                 </div>
               </div>
             </div>
           </div>
         )}
+        <PaywallDialog
+          open={paywallOpen}
+          onOpenChange={setPaywallOpen}
+          reason="pdf_export"
+        />
+        <PrintWaitlistDialog
+          open={printOpen}
+          onOpenChange={setPrintOpen}
+          interviewId={iv.id}
+          volumeTitle={iv.title}
+        />
       </main>
     </PageTransition>
   );
@@ -461,7 +514,15 @@ function BookCoverBack() {
   );
 }
 
-function PageFace({ page, side }: { page: Page; side: "front" | "back" }) {
+function PageFace({
+  page,
+  side,
+  findAudioForAnswer,
+}: {
+  page: Page;
+  side: "front" | "back";
+  findAudioForAnswer?: (text: string) => string | undefined;
+}) {
   void side;
   switch (page.kind) {
     case "front-cover":
@@ -618,12 +679,17 @@ function PageFace({ page, side }: { page: Page; side: "front" | "back" }) {
                   — {b.text}
                 </p>
               ) : (
-                <p
-                  key={bi}
-                  className="font-serif text-[15px] leading-[1.75] text-foreground first:first-letter:font-serif first:first-letter:text-[26px] first:first-letter:text-[color:var(--sepia)]"
-                >
-                  {b.text}
-                </p>
+                <div key={bi} className="space-y-2">
+                  <p className="font-serif text-[15px] leading-[1.75] text-foreground first:first-letter:font-serif first:first-letter:text-[26px] first:first-letter:text-[color:var(--sepia)]">
+                    {b.text}
+                  </p>
+                  {findAudioForAnswer?.(b.text) && (
+                    <VoicePlayback
+                      audioPath={findAudioForAnswer(b.text)!}
+                      label="Play recording"
+                    />
+                  )}
+                </div>
               ),
             )}
           </div>
@@ -678,7 +744,17 @@ function PageFace({ page, side }: { page: Page; side: "front" | "back" }) {
   }
 }
 
-function PageBack({ page, index, total }: { page: Page | undefined; index: number; total: number }) {
+function PageBack({
+  page,
+  index,
+  total,
+  findAudioForAnswer,
+}: {
+  page: Page | undefined;
+  index: number;
+  total: number;
+  findAudioForAnswer?: (text: string) => string | undefined;
+}) {
   // Reuse the same content for the verso side so the page reads continuously.
   if (!page) {
     return (
@@ -687,7 +763,7 @@ function PageBack({ page, index, total }: { page: Page | undefined; index: numbe
   }
   return (
     <div className="relative h-full w-full">
-      <PageFace page={page} side="back" />
+      <PageFace page={page} side="back" findAudioForAnswer={findAudioForAnswer} />
       {/* page number bottom-left on verso */}
       <div className="pointer-events-none absolute bottom-3 left-4 font-sans text-[9px] uppercase tracking-[0.3em] text-[color:var(--ink-tertiary)]">
         {index + 1} / {total}

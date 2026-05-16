@@ -2,24 +2,18 @@ import { useEffect, useState } from "react";
 
 export type FontChoice = "serif" | "sans";
 export type PaperTone = "study" | "dim" | "night";
-export type Tier = "free" | "plus" | "legacy";
 
 export interface Profile {
-  // Identity
   displayName: string;
   pronouns: string;
-  avatarColor: string; // CSS color token name
-  // Reading & writing prefs
+  avatarColor: string;
   font: FontChoice;
-  textSize: number; // 14–22
+  textSize: number;
   paperTone: PaperTone;
-  reminderTime: string; // "HH:MM" or ""
-  // Privacy
+  reminderTime: string;
   appLock: boolean;
   iCloudBackup: boolean;
   localBackup: boolean;
-  // Subscription
-  tier: Tier;
 }
 
 const STORAGE_KEY = "memoir.profile.v1";
@@ -35,7 +29,6 @@ const DEFAULT_PROFILE: Profile = {
   appLock: false,
   iCloudBackup: true,
   localBackup: true,
-  tier: "free",
 };
 
 export function useProfile() {
@@ -45,7 +38,11 @@ export function useProfile() {
   useEffect(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) setProfile({ ...DEFAULT_PROFILE, ...JSON.parse(raw) });
+      if (raw) {
+        const parsed = JSON.parse(raw) as Partial<Profile & { tier?: string }>;
+        const { tier: _tier, ...prefs } = parsed;
+        setProfile({ ...DEFAULT_PROFILE, ...prefs });
+      }
     } catch {
       // ignore
     }
@@ -72,15 +69,7 @@ export function useProfile() {
   return { profile, update, reset, hydrated };
 }
 
-export const TIER_META: Record<Tier, { label: string; tagline: string }> = {
-  free: { label: "Memoir", tagline: "Your everyday journal." },
-  plus: { label: "Memoir Plus", tagline: "Unlimited volumes & themes." },
-  legacy: { label: "Memoir Legacy", tagline: "Heirloom prints, archival." },
-};
-
-// Local-only mock stats. In a real app these come from the entries store.
 export const MOCK_STATS = {
-  totalEntries: 184,
-  currentStreak: 12,
-  volumesPrinted: 2,
+  totalInterviews: 0,
+  boundVolumes: 0,
 };

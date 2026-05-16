@@ -96,8 +96,8 @@ export function useInterviews() {
   const create = useCallback(
     async (
       seed: Pick<Interview, "subjectName" | "relation" | "theme" | "title">,
-    ): Promise<string | null> => {
-      if (!user) return null;
+    ): Promise<{ id: string } | { error: "paywall" | "unknown" }> => {
+      if (!user) return { error: "unknown" };
       const { data, error } = await supabase
         .from("interviews")
         .insert({
@@ -109,10 +109,16 @@ export function useInterviews() {
         })
         .select()
         .single();
-      if (error || !data) return null;
+      if (error) {
+        if (error.code === "42501" || error.message.includes("policy")) {
+          return { error: "paywall" };
+        }
+        return { error: "unknown" };
+      }
+      if (!data) return { error: "unknown" };
       const iv = rowToInterview(data as Row);
       setInterviews((prev) => [iv, ...prev]);
-      return iv.id;
+      return { id: iv.id };
     },
     [user],
   );

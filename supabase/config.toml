@@ -1,7 +1,22 @@
 project_id = "xdixlxkgwvmpwharszeu"
 
 [functions.summarize]
-verify_jwt = false
+verify_jwt = true
 
 [functions.interview-host]
+verify_jwt = true
+
+[functions.stripe-checkout]
+verify_jwt = true
+
+[functions.delete-account]
+verify_jwt = true
+
+[functions.stripe-webhook]
 verify_jwt = false
+
+[functions.revenuecat-webhook]
+verify_jwt = false
+
+[functions.stripe-portal]
+verify_jwt = true
